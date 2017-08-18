@@ -1,7 +1,7 @@
 
  GARDEN OPERATING SYSTEM:
 
- A x86 (32 bits) Operating System.
+ A x86 (32 bits) Operating System in C.
 
  TO COMPILE IN WINDOWS TYPE:
    compile_windows_gcc.bat
