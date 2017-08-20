@@ -1,0 +1,13 @@
+
+Version 0.10.0 - Build Release ( "0001 - 15/08/2017" )
+  F: Video VGA implementation ( with screen scroll ).
+  F: LibC mini implementation ( printk, strlen, itoa ... ) .
+  F: Keyboard implementation.
+  F: Interrupt implementation.
+  F: Shell mini implementation.
+
+Version 0.11.0 - PRE RELEASE ...
+  F: Added Multi Boot Info Implementation: global variable ( var_Multi_Boot_Info )
+  F: Shell Features, added command: cmd
+
+BY: Francisco - gokernel@hotmail.com
