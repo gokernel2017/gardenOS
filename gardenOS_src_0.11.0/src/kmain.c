@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------
 //
-// GARDEN OS
+// GARDEN OS:
 //
 // Main User Function:
 //   void kmain (void);
@@ -40,35 +40,43 @@
 #define STRING_SIZE   255
 #define SHELL_PROMPT  "\nshell > "
 
-char    string [STRING_SIZE];
+char    string  [STRING_SIZE];
+char    buf     [STRING_SIZE];
+//
 int     quit;
 int     key;
 int     is_reboot = 0;
+int     func_index;
 
 // prototypes:
 //
 void reboot (void);
-void func   (int i);
+void func   (void);
 
 struct CMD {
     char  *name;
-    void  (*func) ();
+    void  (*func) (void);
     char  *help;
 } function [] = {
     { "quit",   func,         "Halt the OS" },
     { "cmd",    func,         "Display the command line from Boot Loader" },
+    { "help",   func,         "Display Information about commands ..." },
     { "clear",  video_clear,  "Clear the screen" },
     { "reboot", reboot,       "Reboot the OS" },
     { NULL, NULL, NULL }
 };
-#define FUNC_QUIT    0
-#define FUNC_CMD     1
-
-void func (int i) {
-    if (i == FUNC_QUIT)
+enum {
+    FUNC_QUIT = 0,
+    FUNC_CMD,
+    FUNC_HELP
+};
+void func (void) {
+    if (func_index == FUNC_QUIT) {
         quit = 1;
+        return;
+    }
 
-    if (i == FUNC_CMD) {
+    if (func_index == FUNC_CMD) {
         if (var_Multi_Boot_Info) {
             printk ("\nMulti Boot cmdline(%s)\n", (char *) var_Multi_Boot_Info->cmdline);
 
@@ -80,7 +88,34 @@ void func (int i) {
             printk ("vbe_interface_len: %d\n", var_Multi_Boot_Info->vbe_interface_len);
         }
     }
-}
+    else if (func_index == FUNC_HELP) {
+        int i = 0, count = 5;
+
+        buf[0] = 0;
+        if (strlen(string) > 5) {
+            // ! set argument 1 in buf[]
+            //
+            while (string[count]) {
+                buf[i++] = string[count++];
+                if (string[count] == ' ') break;
+            }
+            buf[i] = 0;
+            if (buf[0]) {
+                struct CMD *cmd = function;
+
+                while (cmd->name) {
+                    if (!strcmp(buf, cmd->name) && cmd->help) {
+                        printk ("\n%s: %s\n", buf, cmd->help);
+                        return;
+                    }
+                    cmd++;
+                }
+            }//: if (buf[0])
+
+        }//: if (strlen(string) > 5)
+    }
+
+}//: void func (void)
 
 void reboot (void) {
     while (inb(0x64) & 0x02); // reboot the computer
@@ -91,7 +126,7 @@ void reboot (void) {
     // do no harm
     //
     asm ("cli;hlt");
-}
+}//: void reboot (void)
 
 void keyboard_handle (int i) {
 
@@ -113,26 +148,32 @@ void keyboard_handle (int i) {
 
     if (key == KEY_ENTER) {
         struct CMD *cmd = function;
-        int count = 0;
+        int i = 0;
 
+        while (string[i]) {
+            buf[i] = string[i];
+            i++;
+            if (string[i] == ' ') break;
+        }
+        buf[i] = 0;
+
+        func_index = 0;
+        
         while (cmd->name) {
 
-            if (!strcmp(string, cmd->name)) {
-
-                cmd->func (count); // execute the command
-
-                count = -1; // found
-
+            if (!strcmp(buf, cmd->name)) {
+                cmd->func (); // execute the command
+                func_index = -1;    // found
                 break;
             }
             cmd++;
-            count++;
+            func_index++;
 
         }//: while (cmd->name)
 
-        if (count != -1) {
+        if (func_index != -1) {
             video_puts ("\nCommand not found (");
-            video_puts (string);
+            video_puts (buf);
             video_puts (")\n");
         }
 
@@ -181,5 +222,6 @@ void kmain (unsigned long arg) {
 
     if (is_reboot)
         reboot();
-}
+
+}//: void kmain (unsigned long arg)
 
