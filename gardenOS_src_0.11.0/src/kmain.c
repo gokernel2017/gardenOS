@@ -48,27 +48,31 @@ int     key;
 int     is_reboot = 0;
 int     func_index;
 
+unsigned char seconds, minutes, hours;
+
 // prototypes:
 //
-void reboot (void);
-void func   (void);
+void reboot     (void);
+void func       (void);
+void help       (void);
+void func_time  (void); // NEED TIME ZONE IMPLEMENTATION ...
 
 struct CMD {
     char  *name;
     void  (*func) (void);
     char  *help;
 } function [] = {
-    { "quit",   func,         "Halt the OS" },
-    { "cmd",    func,         "Display the command line from Boot Loader" },
-    { "help",   func,         "Display Information about commands ..." },
-    { "clear",  video_clear,  "Clear the screen" },
-    { "reboot", reboot,       "Reboot the OS" },
+    { "quit",   func,         "Halt the OS." },
+    { "cmd",    func,         "Display the command line from Boot Loader." },
+    { "help",   help,         "Display Information about commands ..." },
+//    { "time",   func_time,    "Display the Time Clock" },
+    { "clear",  video_clear,  "Clear the screen." },
+    { "reboot", reboot,       "Reboot the OS." },
     { NULL, NULL, NULL }
 };
 enum {
     FUNC_QUIT = 0,
     FUNC_CMD,
-    FUNC_HELP
 };
 void func (void) {
     if (func_index == FUNC_QUIT) {
@@ -88,34 +92,86 @@ void func (void) {
             printk ("vbe_interface_len: %d\n", var_Multi_Boot_Info->vbe_interface_len);
         }
     }
-    else if (func_index == FUNC_HELP) {
-        int i = 0, count = 5;
-
-        buf[0] = 0;
-        if (strlen(string) > 5) {
-            // ! set argument 1 in buf[]
-            //
-            while (string[count]) {
-                buf[i++] = string[count++];
-                if (string[count] == ' ') break;
-            }
-            buf[i] = 0;
-            if (buf[0]) {
-                struct CMD *cmd = function;
-
-                while (cmd->name) {
-                    if (!strcmp(buf, cmd->name) && cmd->help) {
-                        printk ("\n%s: %s\n", buf, cmd->help);
-                        return;
-                    }
-                    cmd++;
-                }
-            }//: if (buf[0])
-
-        }//: if (strlen(string) > 5)
-    }
 
 }//: void func (void)
+
+void help (void) {
+    int i = 0, count = 5;
+    struct CMD *cmd = function;
+
+    if (!strcmp(string, "help")) { // no argument: display all commands
+        while (cmd->name) {
+            printk ("\n%s: %s", cmd->name, cmd->help);
+            cmd++;
+        }
+        return;
+    }
+
+    buf[0] = 0;
+    if (strlen(string) > 5) {
+        // ! set argument 1 in buf[]
+        //
+        while (string[count]) {
+            buf[i++] = string[count++];
+            if (string[count] == ' ') break;
+        }
+        buf[i] = 0;
+        if (buf[0]) {
+
+            while (cmd->name) { // find with argument
+                if (!strcmp(buf, cmd->name) && cmd->help) {
+                    printk ("\n%s: %s\n", buf, cmd->help);
+              return;
+                }
+                cmd++;
+            }
+
+            if (buf[1] != 0) {
+                video_puts ("\nHelp Usage:\nhelp\nhelp c\nhelp command\n");
+          return;
+            }
+
+            cmd = function;
+            while (cmd->name) { // find from the first letter of argument
+                if (buf[0] == cmd->name[0] && cmd->help) {
+                    printk ("\n%s: %s", cmd->name, cmd->help);
+                }
+                cmd++;
+            }
+
+        }//: if (buf[0])
+
+    }//: if (strlen(string) > 5)
+
+}//: void help (void)
+
+//
+// NEED TIME ZONE IMPLEMENTATION ...
+//
+void func_time (void) {
+/*
+    asm ("mov $0, %al");    // 0 = seconds
+    asm ("out %al, $0x70");
+    asm ("in $0x71, %al");
+    asm ("mov %al, _seconds");  // copy ( %al ) in var ( seg )
+
+    asm ("mov $2, %al");    // 2 = minutes
+    asm ("out %al, $0x70");
+    asm ("in $0x71, %al");
+    asm ("mov %al, _minutes");  // copy ( %al ) in var ( seg )
+
+    asm ("mov $4, %al");    // 2 = hours
+    asm ("out %al, $0x70");
+    asm ("in $0x71, %al");
+    asm ("mov %al, _hours");  // copy ( %al ) in var ( seg )
+
+    printk ("\ntime: %d:%d:%d\n",
+        ((hours   & 0x0F) + ((hours   / 16) * 10)),
+        ((minutes & 0x0F) + ((minutes / 16) * 10)),
+        ((seconds & 0x0F) + ((seconds / 16) * 10))
+        );
+*/
+}
 
 void reboot (void) {
     while (inb(0x64) & 0x02); // reboot the computer
