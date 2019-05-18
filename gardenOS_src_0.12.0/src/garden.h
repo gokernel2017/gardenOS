@@ -85,7 +85,7 @@
 //-----------------------------------------------
 //
 typedef unsigned char         Uchar;
-typedef unsigned int					uint32_t;
+typedef unsigned int          uint32_t;
 
 
 //-----------------------------------------------
@@ -137,14 +137,14 @@ extern void * malloc          (unsigned int amount);
 //
 // kheap.c
 //
-extern void		kheap_SPEC			(void);
-extern void * kmalloc					(unsigned sz);
-extern void 	kfree						(void *fr);
+extern void   kheap_SPEC      (void);
+extern void * kmalloc         (unsigned sz);
+extern void   kfree           (void *fr);
 
 //
 // sprintf.c
 //
-extern int		sprintf					(char *str, const char *format, ...);
+extern int    sprintf         (char *str, const char *format, ...);
 
 #endif // ! _GARDEN_H_
 
