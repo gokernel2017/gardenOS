@@ -3,7 +3,7 @@ GARDEN OPERATING SYSTEM:
 
 A x86 (32 bits) Operating System in C.
 
-TANKS TO:
+TKANKS TO:
 ----------------------------------------------
   01: God the creator of the heavens and the earth in the name of Jesus Christ.
 
