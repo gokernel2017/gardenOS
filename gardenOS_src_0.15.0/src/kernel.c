@@ -74,7 +74,7 @@ static void kernel_finalize (void) {
 }
 
 void kernel_wait (void) {
-		__asm__ __volatile__ ("hlt");
+    __asm__ __volatile__ ("hlt");
 }
 
 void reboot (void) {

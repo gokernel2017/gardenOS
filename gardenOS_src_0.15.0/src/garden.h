@@ -50,7 +50,7 @@
 #define CLOCKS_PER_SEC        1000
 
 // keys:
-#define KEY_BACKSPACE					8
+#define KEY_BACKSPACE         8
 #define KEY_TAB               9
 #define KEY_ENTER             13
 #define KEY_ESC               27
@@ -74,8 +74,8 @@
 
 // kernel.c
 //
-extern void kernel_main   	(struct multiboot_info *mbi);
-extern void kernel_wait			(void);
+extern void kernel_main     (struct multiboot_info *mbi);
+extern void kernel_wait     (void);
 
  // Read a byte from the specified port
 extern inline unsigned char inb   (unsigned short port);
@@ -85,14 +85,14 @@ extern inline void          outb  (unsigned short port, unsigned char value);
 // video.c
 //
 extern void video_put       (void);
-extern void video_putc    	(char c);
-extern void video_puts			(const char *s);
-extern void video_clear   	(void);
+extern void video_putc      (char c);
+extern void video_puts      (const char *s);
+extern void video_clear     (void);
 extern void video_backspace (void);
 extern void video_display_time (void);
 // libc.c
 //
-extern void printk        	(const char *format, ...);
+extern void printk          (const char *format, ...);
 extern int  strcmp          (const char *s1, const char *s2);
 extern void *memset         (void *s, int c, unsigned int n);
 
