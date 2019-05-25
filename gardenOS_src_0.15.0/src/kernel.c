@@ -45,36 +45,26 @@ struct CMD {
     { NULL, NULL, NULL }
 };
 
-// Read a byte from the specified port
-inline unsigned char inb (unsigned short port) {
-    unsigned char result;
-    asm volatile ("inb %1, %0" : "=a" (result) : "d" (port));
-    return result;
-}
-
-// Write a byte into the specified port
-inline void outb (unsigned short port, unsigned char value) {
-    asm volatile ("outb %0, %1" : :"a" (value), "d" (port));
-}
-
-static void kernel_init (struct multiboot_info *mbi) {
+void kernel_init (unsigned long addr) {
+//	(struct multiboot_info*) addr;
+	
     video_clear();
     printk ("\nGarden OS: %d.%d.%d\n",
             GARDEN_VERSION, GARDEN_VERSION_SUB, GARDEN_VERSION_PATCH);
 
     video_puts ("GLORY TO GOD:\n  The creator of the heavens and the earth in the name of Jesus Christ. !\n\n");
 
-    printk ("\nMulti Boot cmdline(%s)\n", (char *) mbi->cmdline);
+//    printk ("\nMulti Boot cmdline(%s)\n", (char *) mbi->cmdline);
 
     video_puts ("\nTo display the commands list press: KEY TAB\n");
 }
 
-static void kernel_finalize (void) {
+void kernel_finalize (void) {
     video_puts ("\nKernel Finalize\n");
 }
 
 void kernel_wait (void) {
-    __asm__ __volatile__ ("hlt");
+    asm volatile ("hlt");
 }
 
 void reboot (void) {
@@ -86,11 +76,11 @@ void reboot (void) {
     // do no harm
     //
     //_ASM ("cli;hlt");
-    asm ("cli;hlt");
+    asm volatile ("cli;hlt");
 
 }//: void reboot (void)
 
-static int ExecuteCommand (char *string) {
+int ExecuteCommand (char *string) {
     static int pos = 0;
     int k;
 
@@ -187,21 +177,17 @@ void PIT_timer_handler (int i) {
 }
 
 void kernel_main_loop (void) {
-    int fps, count;
 
     video_puts (SHELL_PROMPT);
 
-    quit = fps = count = 0;
+    quit = 0;
 
     while (!quit) {
-
-        fps++;
 
         // HERE: execute each 1 second:
         //
         if (PIT_timer_ticks % CLOCKS_PER_SEC == 0) {
 
-            printk ("FPS: %d | count: %d\n", fps, count++); fps = 0;
             video_display_time ();
 
         }
@@ -209,13 +195,13 @@ void kernel_main_loop (void) {
         //
         // ... ! wait the next interrupts ...
         //
-//        kernel_wait ();
+        kernel_wait ();
     }
 }
 
-void kernel_main (struct multiboot_info *mbi) {
+void kernel_main (unsigned long addr) {
 
-    kernel_init (mbi);
+    kernel_init (addr);
 
     intr_Init       (); // interrupt init
     intr_SetMask    (IRQ_KEYBOARD, TRUE); // enable keyboard interrupt

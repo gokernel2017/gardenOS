@@ -35,6 +35,12 @@ multiboot_header:
     .long   _ker_bss_end_                       // bss_end_addr, use 0 if init done by kernel
     .long   multiboot_entry                     // entry_addr
 
+/* Request linear graphics mode
+.long 0x00000000
+.byte 0
+.byte 0
+.byte 32
+*/
 
 multiboot_entry:
 
@@ -60,7 +66,6 @@ multiboot_entry:
 
 
 label_forever:
-    hlt
-    jmp label_forever
-
+  hlt
+  jmp label_forever
 

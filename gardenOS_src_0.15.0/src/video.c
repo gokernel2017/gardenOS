@@ -40,16 +40,27 @@ enum {
 };
 
 static char   *video = (char*)0xb8000; // video memory begins at address 0xb8000
-static char   text_color = 0x07;
-static int    video_count = 0;
-static int    pos = 0;
-static int    line = 0;
-
-static int    _pos_ = 0;
-static int    _line_ = 0;
+int   pos;
+int   line;
+int   _saved_pos_;
+int   _saved_line_;
 
 unsigned char seconds, minutes, hours;
+int   text_color = 0x07;
+int   video_count = 0;
 
+
+// Read a byte from the specified port
+unsigned char inb (unsigned short port) {
+    unsigned char result;
+    asm volatile ("inb %1, %0" :"=a" (result) :"d" (port));
+    return result;
+}
+
+// Write a byte into the specified port
+void outb (unsigned short port, unsigned char value) {
+    asm volatile ("outb %0, %1" : :"a" (value), "d" (port)); //: metalkit
+}
 
 // Set cursor position
 // The same implementation as in get_cursor_offset()
@@ -136,14 +147,15 @@ void video_goto_line (int y) {
 }
 
 void video_csave(void) {
-    _pos_ = pos;
-    _line_ = line;
+    _saved_pos_ = pos;
+    _saved_line_ = line;
 }
 
 void video_crestore (void) {
-    pos = _pos_;
-    line = _line_;
+    pos = _saved_pos_;
+    line = _saved_line_;
 }
+
 
 //
 // NEED TIME ZONE IMPLEMENTATION ...
@@ -153,34 +165,34 @@ void video_display_time (void) {
     int save_line = line;
     int save_pos = pos;
 
-    asm ("mov $0, %al");    // 0 = seconds
-    asm ("out %al, $0x70");
-    asm ("in $0x71, %al");
+    asm volatile ("mov $0, %al");    // 0 = seconds
+    asm volatile ("out %al, $0x70");
+    asm volatile ("in $0x71, %al");
     #ifdef WIN32
-    asm ("mov %al, _seconds");  // copy ( %al ) in var ( seg )
+    asm volatile ("mov %al, _seconds");  // copy ( %al ) in var ( seg )
     #endif
     #ifdef __linux__
-    asm ("mov %al, seconds");  // copy ( %al ) in var ( seg )
+    asm volatile ("mov %al, seconds");  // copy ( %al ) in var ( seg )
     #endif
 
-    asm ("mov $2, %al");    // 2 = minutes
-    asm ("out %al, $0x70");
-    asm ("in $0x71, %al");
+    asm volatile ("mov $2, %al");    // 2 = minutes
+    asm volatile ("out %al, $0x70");
+    asm volatile ("in $0x71, %al");
     #ifdef WIN32
-    asm ("mov %al, _minutes");  // copy ( %al ) in var ( seg )
+    asm volatile ("mov %al, _minutes");  // copy ( %al ) in var ( seg )
     #endif
     #ifdef __linux__
-    asm ("mov %al, minutes");  // copy ( %al ) in var ( seg )
+    asm volatile ("mov %al, minutes");  // copy ( %al ) in var ( seg )
     #endif
 
-    asm ("mov $4, %al");    // 2 = hours
-    asm ("out %al, $0x70");
-    asm ("in $0x71, %al");
+    asm volatile ("mov $4, %al");    // 2 = hours
+    asm volatile ("out %al, $0x70");
+    asm volatile ("in $0x71, %al");
     #ifdef WIN32
-    asm ("mov %al, _hours");  // copy ( %al ) in var ( seg )
+    asm volatile ("mov %al, _hours");  // copy ( %al ) in var ( seg )
     #endif
     #ifdef __linux__
-    asm ("mov %al, hours");  // copy ( %al ) in var ( seg )
+    asm volatile ("mov %al, hours");  // copy ( %al ) in var ( seg )
     #endif
 
     text_color = VGA_COLOR_LIGHT_GREEN;

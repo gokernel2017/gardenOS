@@ -140,9 +140,7 @@ void intr_SetMask (int irq, char enable) {
 
 
 void intr_Halt(void) {
-   //asm volatile ("hlt");
-//   _ASM ("hlt");
-    asm ("hlt");
+   asm volatile ("hlt");
 }
 
 void function_null (int i) {

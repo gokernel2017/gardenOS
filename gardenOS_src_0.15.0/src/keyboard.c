@@ -119,8 +119,6 @@ int keyboard_getkey (void) {
 
     if (code > 0) {
 
-//printk("keyboard_getkey: %d\n", code);
-
         //-----------------------------
         // ON KEY OUT
         //-----------------------------

@@ -1,3 +1,8 @@
+/*
+OUTPUT_FORMAT(pe-i386)
+OUTPUT_FORMAT("elf32-i386")
+OUTPUT_FORMAT(elf64-x86-64)
+*/
 SECTIONS
 { 
 	. = 0x100000;            /* loading address = grub header, must be 32 bits aligned */
