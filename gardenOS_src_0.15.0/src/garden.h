@@ -94,6 +94,9 @@ enum {
 
 typedef unsigned char       Uchar;
 
+// global:
+extern int fps;
+
 // kernel.c
 //
 extern void kernel_main     (unsigned long arg);

@@ -18,6 +18,9 @@
 #define SHELL_PROMPT    "\nshell > "
 #define FPS_50_PER_SEC  20
 
+// global:
+int fps;
+
 static char
     string_command [STRING_SIZE + 1]
     ;
@@ -40,9 +43,9 @@ struct CMD {
     void  (*func) ( );
     char  *help;
 } command [] = {
-    { "clear",  video_clear,  "Clear the screen." },
-    { "quit",   NULL,         "Halt the OS." },
-    { "reboot", reboot,       "Reboot the OS." },
+    { "quit",     NULL,         "Halt the OS." },
+    { "clear",    video_clear,  "Clear the screen." },
+    { "reboot",   reboot,       "Reboot the OS." },
     { NULL, NULL, NULL }
 };
 
@@ -85,6 +88,7 @@ void reboot (void) {
     asm volatile ("cli;hlt");
 
 }//: void reboot (void)
+
 
 int ExecuteCommand (char *string) {
     static int pos = 0;
@@ -211,6 +215,7 @@ void PIT_timer_handler (int i) {
 
 }
 
+
 void kernel_main_loop (void) {
 
     video_puts (SHELL_PROMPT);
@@ -218,12 +223,23 @@ void kernel_main_loop (void) {
     quit = 0;
 
     while (!quit) {
+	
+        // HERE: execute 50 time in 1 second:
+        //
+        // 1000 / 20 := 50
+        //
+        if (PIT_timer_ticks % FPS_50_PER_SEC == 0) {
+
+            fps++; 
+
+        }
 
         // HERE: execute each 1 second:
         //
         if (PIT_timer_ticks % CLOCKS_PER_SEC == 0) {
 
             video_display_time ();
+            fps = 0;
 
         }
 
@@ -231,7 +247,6 @@ void kernel_main_loop (void) {
         // ... ! wait the next interrupts ...
         //
         kernel_wait ();
-
     }
 
 }// kernel_main_loop ()

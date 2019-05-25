@@ -28,7 +28,6 @@ unsigned char seconds, minutes, hours;
 int   text_color = 0x07;
 int   video_count = 0;
 
-
 // Read a byte from the specified port
 unsigned char inb (unsigned short port) {
     unsigned char result;
@@ -182,11 +181,12 @@ void video_display_time (void) {
 
     pos = 0;
     line = 0;
-    printk ("Time: %d:%d:%d | video_count : %d   \n",
+    printk ("Time: %d:%d:%d | video_count : %d > FPS: %d   \n",
         ((hours   & 0x0F) + ((hours   / 16) * 10)),
         ((minutes & 0x0F) + ((minutes / 16) * 10)),
         ((seconds & 0x0F) + ((seconds / 16) * 10)),
-        video_count++
+        video_count++,
+        fps
         );
     line = save_line;
     pos = save_pos;
