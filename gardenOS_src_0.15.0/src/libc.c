@@ -93,9 +93,10 @@ int strcmp (const char *s1, const char *s2) {
 //   convert an integer into a string
 //
 //-------------------------------------------------------------------
-void itoa (unsigned long n, unsigned char *s, char base) {
+void itoa (unsigned long n, char *s, char base) {
     unsigned long i, j;
-    unsigned char tmp[20], digit;
+    unsigned char digit;
+    char tmp[20];
 
     i = 0;
     do {

@@ -18,8 +18,9 @@
 #define SHELL_PROMPT    "\nshell > "
 #define FPS_50_PER_SEC  20
 
-char    string_command [STRING_SIZE];
-char    buf     [STRING_SIZE];
+static char
+    string_command [STRING_SIZE + 1]
+    ;
 
 static unsigned long
     PIT_timer_ticks
@@ -36,7 +37,7 @@ void reboot (void);
 
 struct CMD {
     char  *name;
-    void  (*func) (void);
+    void  (*func) ( );
     char  *help;
 } command [] = {
     { "clear",  video_clear,  "Clear the screen." },
@@ -45,6 +46,7 @@ struct CMD {
     { NULL, NULL, NULL }
 };
 
+
 void kernel_init (unsigned long addr) {
 //	(struct multiboot_info*) addr;
 	
@@ -52,9 +54,13 @@ void kernel_init (unsigned long addr) {
     printk ("\nGarden OS: %d.%d.%d\n",
             GARDEN_VERSION, GARDEN_VERSION_SUB, GARDEN_VERSION_PATCH);
 
+    video_set_color (VGA_COLOR_LIGHT_BROWN);
+
     video_puts ("GLORY TO GOD:\n  The creator of the heavens and the earth in the name of Jesus Christ. !\n\n");
 
 //    printk ("\nMulti Boot cmdline(%s)\n", (char *) mbi->cmdline);
+
+    video_set_color (WHITE_TXT);
 
     video_puts ("\nTo display the commands list press: KEY TAB\n");
 }
@@ -124,18 +130,21 @@ void keyboard_handle (int i) {
     if (key == KEY_TAB) {
         struct CMD *cmd = command;
         video_puts ("\nCommands: ");
+        video_set_color(VGA_COLOR_LIGHT_MAGENTA);
         while (cmd->name) {
             printk ("%s ", cmd->name);
             cmd++;
         }
+        video_set_color(WHITE_TXT);
         video_puts (SHELL_PROMPT);
         video_puts (string_command);
         return;
     }
 
     if (key == KEY_ENTER) {
-//        struct CMD *cmd = function;
-        int i = 0;
+        struct CMD *cmd = command;
+        char buf [STRING_SIZE + 1];
+        int i = 0, exist;
 
         while (string_command[i]) {
             buf[i] = string_command[i];
@@ -144,31 +153,57 @@ void keyboard_handle (int i) {
         }
         buf[i] = 0;
 
+        // ! find if command exist
+        i = 0;
+        exist = -1;
+        while (cmd->name) {
+            if (!strcmp(cmd->name, buf)) {
+                exist = i; // <<<<<<<<<<  OK FUNCTION EXIST  >>>>>>>>>>
+                break;
+            }
+            i++;
+            cmd++;
+        }
+        // command not found:
+        if (exist == -1) {
+            video_set_color(VGA_COLOR_LIGHT_CYAN);
+            printk ("\nCommand Not Found: '%s'", buf);
+            memset (string_command, 0, STRING_SIZE);
+            video_set_color(WHITE_TXT);
+            video_puts (SHELL_PROMPT);
+            return;
+        }
+
         //---------------------------------------
         //------------  START EXECUTE  ----------
         //---------------------------------------
+
         if (!strcmp(buf, "quit")) {
             quit = 1;
-        }
-        if (!strcmp(buf, "clear")) {
-            video_clear();
+      return;
         }
         if (!strcmp(buf, "reboot")) {
             quit = is_reboot = 1;
-            return;
+      return;
+        }
+
+        //
+        // ... Execute The Function ...
+        //
+        if (exist != -1 && command[exist].func != NULL) {
+            command[exist].func();
         }
 
         //---------------------------------------
         //------------  END EXECUTE  ------------
         //---------------------------------------
 
-
         memset (string_command, 0, STRING_SIZE);
-
         video_puts (SHELL_PROMPT);
 
     }//: if (key == KEY_ENTER)
 }
+
 
 void PIT_timer_handler (int i) {
 
@@ -196,8 +231,11 @@ void kernel_main_loop (void) {
         // ... ! wait the next interrupts ...
         //
         kernel_wait ();
+
     }
-}
+
+}// kernel_main_loop ()
+
 
 void kernel_main (unsigned long addr) {
 
