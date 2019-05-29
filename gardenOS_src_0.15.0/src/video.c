@@ -142,7 +142,7 @@ void video_set_color (unsigned char color) {
 //
 // NEED TIME ZONE IMPLEMENTATION ...
 //
-void video_display_time (void) {
+void video_display_time (int value) {
 //	setenv("TZ", "America/Sao_Paulo", 1);
     int save_line = line;
     int save_pos = pos;
@@ -181,18 +181,19 @@ void video_display_time (void) {
 
     pos = 0;
     line = 0;
-    printk ("Time: %d:%d:%d | video_count : %d > FPS: %d   \n",
+    printk ("Time: %d:%d:%d | %d | FPS: %d     \n",
         ((hours   & 0x0F) + ((hours   / 16) * 10)),
         ((minutes & 0x0F) + ((minutes / 16) * 10)),
         ((seconds & 0x0F) + ((seconds / 16) * 10)),
         video_count++,
-        fps
+        value
         );
     line = save_line;
     pos = save_pos;
     set_cursor_position (pos/2);
 
     text_color = WHITE_TXT;
+
 }
 
 

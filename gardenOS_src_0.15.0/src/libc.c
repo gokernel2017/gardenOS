@@ -28,20 +28,6 @@
 //
 #include "garden.h"
 
-#define MAIN_MEMORY_START   0x200000
-
-static unsigned char *nextfree = (unsigned char*) MAIN_MEMORY_START;
-
-// NEED IMPLEMENTATION ...
-//
-void *malloc (unsigned int amount) {
-    void *retval = nextfree;
-
-    nextfree += amount;
-
-    return retval;
-}
-
 
 int strlen (const char *str) {
     register char *s = (char*)str;
@@ -60,6 +46,7 @@ int strlen (const char *str) {
 //   adds src to dest
 //
 //-------------------------------------------------------------------
+//
 char *strcat (char *dest, const char *src) {
     char *s = dest;
 	
@@ -72,6 +59,15 @@ char *strcat (char *dest, const char *src) {
     return dest;
 }
 
+/* strcpy() 
+ * copies src to dest
+ */
+char *strcpy (char *dest, const char *src) {
+		while (*src != '\0')
+				*(dest++) = *(src++);
+		return dest;
+}
+
 /* strcmp() 
  * compares two strings 
  */
@@ -80,6 +76,19 @@ int strcmp (const char *s1, const char *s2) {
         if (*s1 == '\0')
             return 0;	/* equal */
     return *s1 - *s2;
+}
+
+char * strdup (const char* str) {
+    size_t length = strlen(str);
+    char* result = kmalloc(length + 1);
+    memcpy(result, str, length + 1);
+    return result;
+}
+
+char * strchr (const char *s, int c) {
+    while (*s && *s != c)
+        s++;
+    return *s || !c? s: NULL;
 }
 
 //-------------------------------------------------------------------
@@ -93,10 +102,43 @@ int strcmp (const char *s1, const char *s2) {
 //   convert an integer into a string
 //
 //-------------------------------------------------------------------
-void itoa (unsigned long n, char *s, char base) {
+//
+/*
+static int next;
+static char qbuf[8];
+
+char *itoa(n)
+int n;
+{
+  register int r, k;
+  int flag = 0;
+
+  next = 0;
+  if (n < 0) {
+	qbuf[next++] = '-';
+	n = -n;
+  }
+  if (n == 0) {
+	qbuf[next++] = '0';
+  } else {
+	k = 10000;
+	while (k > 0) {
+		r = n/k;
+		if (flag || r > 0) {
+			qbuf[next++] = '0' + r;
+			flag = 1;
+		}
+		n -= r * k;
+		k = k/10;
+	}
+  }
+  qbuf[next] = 0;
+  return(qbuf);
+}
+*/
+void itoa (unsigned long n, unsigned char *s, char base) {
     unsigned long i, j;
-    unsigned char digit;
-    char tmp[20];
+    unsigned char tmp[20], digit;
 
     i = 0;
     do {
@@ -136,6 +178,28 @@ void *memset (void *s, int c, unsigned int n) {
         *(to++) = c;
     return s;
 }
+
+/*
+// denix
+void* memcpy(void* restrict dest, const void* restrict src, size_t size) {
+    unsigned char* d = dest;
+    const unsigned char* s = src;
+
+    for (size_t i = 0; i < size; i++) {
+        d[i] = s[i];
+    }
+
+    return dest;
+}
+*/
+
+void *memcpy (void *dest, const void *src, size_t n) {
+    char *to = (char*) dest, *from = (char*) src;
+    while (n-- > 0)
+        *(to++) = *(from++);
+    return dest;
+}
+
 
 /**
  * K&R implementation
@@ -190,3 +254,138 @@ void printk (const char *format, ...) {
 
 }//: void printk (const char *format, ...)
 
+
+/*
+ * lib/vsprintf.c
+ * Copyright (C) 2002 Alexander Blessing
+ *
+ * this file only contains the quite important function vsprintf.c
+ * This function is totally written by me - not as powerful as Linus'
+ * but it's my own one :-)
+ */
+
+/*
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>	// for va_list and va_arg 
+//#include <kernel/interrupt.h>
+*/
+
+void vsprintk (char *str, const char *format, va_list ap) {
+	char *p = str;
+	char *s; int d; char c; char buf[MAXLEN];
+	int i = 0;
+	
+	*p = '\0';
+	/* go through format until we reach a % */
+	while (*format != '\0')
+	{
+		if (*format != '%') {	/* ordinary character */
+			i = strlen(p);
+			p[i] = *format;
+			p[i + 1] = '\0';
+		}
+		
+		else {
+			switch (*(format + 1)) {
+				case 'c':	/* char */
+					c = (char) va_arg(ap, int);
+					i = strlen(p);
+					p[i] = c;
+					p[i + 1]  = '\0';
+					break;		
+				case 's':	/* string */
+					s = va_arg(ap, char *);
+					strcat(p, s);
+					break;
+				case 'd':	/* integer */
+				case 'i':
+					d = va_arg(ap, int);
+					itoa(d, buf, 10);	/* convert to string */
+					strcat(p, buf);
+					break;
+				case 'x':	/* hexa-decimal */
+					d = va_arg(ap, int);
+					itoa(d, buf, 16);
+					strcat(p, buf);
+					break;
+				default:
+					/* print the % and the following character */
+					i = strlen(p);
+					p[i]  = *format;
+					p[i + 1]  = *(format + 1);
+					p[i + 2]  = '\0';
+					break;
+			}
+			format++;
+		}
+		format++;
+	}
+}
+
+void sprintk (char *str, const char *format, ...) {
+    va_list ap;
+    va_start (ap, format);
+    vsprintk (str, format, ap);
+    va_end (ap);
+    //return strlen (str);
+}
+
+
+/*
+ * Copyright (c) 2015-2018, Davide Galassi. All rights reserved.
+ *
+ * This file is part of the BeeOS software.
+ *
+ * BeeOS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
+ */
+
+
+#define isspace(c) 	((int) ((c) == ' '  || (c) == '\n' || (c) == '\f' \
+						 || (c) == '\r' || (c) == '\t' || (c) == 'v'))
+
+/** Test for a decimal digit. */
+#define isdigit(c) 	((int) ((c) >= '0' && (c) <= '9'))
+
+
+int atoi (const char *str) {
+	int i;
+	int sign = +1;
+	int num;
+
+	for (i = 0; isspace(str[i]); i++);
+
+	if (str[i] == '+')
+	{
+		i++;
+	}
+	else if (str[i] == '-')
+	{
+		sign = -1;
+		i++;
+	}
+
+	for (num = 0; isdigit(str[i]); i++)
+	{
+		num = (num << 3)+(num << 1);	/* num *= 10 */
+		num += (str[i] - '0');
+	}
+
+	if (sign == -1)
+	{
+		num = -num;
+	}
+
+	return num;
+}

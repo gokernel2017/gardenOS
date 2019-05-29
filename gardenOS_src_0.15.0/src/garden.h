@@ -32,11 +32,19 @@
 #ifndef _GARDEN_H_
 #define _GARDEN_H_
 
+#define USE_SUMMER_LANGUAGE 1
+
 //-----------------------------------------------
 //------------------  INCLUDE  ------------------
 //-----------------------------------------------
 //
 #include "multiboot.h"
+
+#ifdef USE_SUMMER_LANGUAGE
+    #include "lang_lex.h"
+    #include "lang_asm.h"
+    #include "lang_summer.h"
+#endif
 
 //-----------------------------------------------
 //---------------  DEFINE / ENUM  ---------------
@@ -47,6 +55,7 @@
 #define GARDEN_VERSION_PATCH  2
 
 #define NULL                  ((void*)0)
+#define MAXLEN								1024
 #define CLOCKS_PER_SEC        1000
 
 // keys:
@@ -73,6 +82,26 @@
 
 #define WHITE_TXT             0x07 // light gray on black text
 
+#define ARG_MAX								10
+
+typedef char *va_list;
+
+/* Amount of space required in an argument list for an arg of type TYPE.
+   TYPE may alternatively be an expression whose type is used.  */
+
+#define __va_rounded_size(TYPE)  \
+  (((sizeof (TYPE) + sizeof (int) - 1) / sizeof (int)) * sizeof (int))
+
+#define va_start(AP, LASTARG) \
+ (AP = ((char *) &(LASTARG) + __va_rounded_size(LASTARG)))
+
+extern void va_end (va_list);
+#define va_end(AP) /* Nothing */
+
+#define va_arg(AP, TYPE) (AP += __va_rounded_size (TYPE), \
+  *((TYPE *) (AP - __va_rounded_size (TYPE))))
+
+
 enum {
     VGA_COLOR_BLACK = 0,
     VGA_COLOR_BLUE = 1,
@@ -92,15 +121,24 @@ enum {
     VGA_COLOR_WHITE = 15,
 };
 
-typedef unsigned char       Uchar;
+//-----------------------------------------------
+//------------------  STRUCTS  ------------------
+//-----------------------------------------------
+//
 
-// global:
-extern int fps;
+typedef struct {
+    int     argc;
+    int     type [ARG_MAX + 1];
+    VALUE   argv [ARG_MAX + 1];
+}CMD_ARG;
+
+typedef __SIZE_TYPE__       size_t;
+typedef unsigned char       Uchar;
 
 // kernel.c
 //
-extern void kernel_main     (unsigned long arg);
-extern void kernel_init     (unsigned long arg);
+extern void kernel_main     (struct multiboot_info * mbi);
+extern int  kernel_init     (struct multiboot_info * mbi);
 extern void kernel_finalize (void);
 extern void kernel_wait     (void);
 
@@ -109,15 +147,27 @@ extern void kernel_wait     (void);
 //
 extern int    strlen        (const char *str);
 extern char * strcat        (char *dest, const char *src);
+extern char	*	strcpy				(char *dest, const char *src);
 extern int    strcmp        (const char *s1, const char *s2);
-extern void   itoa          (unsigned long n, char *s, char base);
+extern char * strdup        (const char* str);
+extern char * strchr        (const char *s, int c);
+extern void   itoa          (unsigned long n, unsigned char *s, char base);
+extern int		atoi					(const char *str);
 extern void * memset        (void *s, int c, unsigned int n);
+extern void * memcpy        (void *dest, const void *src, size_t n);
 extern void   printk        (const char *fmt, ...);
+// Copyright (C) 2002 Alexander Blessing
+//   Alexander Blessing - Flick OS:
+//   https://sourceforge.net/projects/flick/
+extern void   sprintk       (char *str, const char *format, ...);
+extern void		vsprintk			(char *str, const char *format, va_list ap);
+
 
 // keyboard.c
 //
 extern void keyboard_wait   (void);
 extern int  keyboard_getkey (void);
+
 
 // video.c
 //
@@ -134,7 +184,18 @@ extern void   video_goto_line     (int y);
 extern void   video_csave         (void); // cursor save position
 extern void   video_crestore      (void); // cursor restore position
 extern void   video_scroll        (void);
-extern void   video_display_time  (void);
+extern void   video_display_time  (int value);
+
+// kmalloc.c | MyOS_Blundell-master
+//
+extern void	*	kmalloc							(unsigned sz);
+extern void		kfree								(void *fr);
+extern void		kheap_SPEC					(void);
+//
+// SUMMER LANGUAGE | lang_core.c
+//
+extern ASM  * core_Init           (unsigned int size);
+extern int    core_Parse          (LEXER *l, ASM *a, char *text, char *name);
 
 #endif // ! _GARDEN_H
 

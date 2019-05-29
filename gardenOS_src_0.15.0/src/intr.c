@@ -159,7 +159,7 @@ void IntrDefaultHandler (int vector)
    /* Do nothing. */
 }
 
-void Intr_Enable(void) {
+void intr_Enable(void) {
    asm volatile ("sti");
 }
 
@@ -310,7 +310,7 @@ fastcall void intr_Init (void) {
         outb (p->port, p->data);
     }
 
-    Intr_Enable();
+    intr_Enable();
 
     for (i = 0; i < NUM_FAULT_VECTORS; i++) {
         IntrTrampoline [ i ].handler = function_null;

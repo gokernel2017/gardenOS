@@ -96,6 +96,6 @@ void intr_timer_InitPIT (unsigned short divisor);
 
 void intr_Disable (void);
 
-void Intr_Enable(void);
+void intr_Enable(void);
 
 #endif /* _INTR_H_ */
