@@ -55,7 +55,7 @@
 #define GARDEN_VERSION_PATCH  2
 
 #define NULL                  ((void*)0)
-#define MAXLEN								1024
+#define MAXLEN                1024
 #define CLOCKS_PER_SEC        1000
 
 // keys:
@@ -82,9 +82,12 @@
 
 #define WHITE_TXT             0x07 // light gray on black text
 
-#define ARG_MAX								10
+#define ARG_MAX               10
 
-typedef char *va_list;
+typedef char                  * va_list;
+typedef __SIZE_TYPE__         size_t;
+typedef unsigned char         Uchar;
+
 
 /* Amount of space required in an argument list for an arg of type TYPE.
    TYPE may alternatively be an expression whose type is used.  */
@@ -132,8 +135,6 @@ typedef struct {
     VALUE   argv [ARG_MAX + 1];
 }CMD_ARG;
 
-typedef __SIZE_TYPE__       size_t;
-typedef unsigned char       Uchar;
 
 // kernel.c
 //
@@ -147,12 +148,12 @@ extern void kernel_wait     (void);
 //
 extern int    strlen        (const char *str);
 extern char * strcat        (char *dest, const char *src);
-extern char	*	strcpy				(char *dest, const char *src);
+extern char	* strcpy        (char *dest, const char *src);
 extern int    strcmp        (const char *s1, const char *s2);
 extern char * strdup        (const char* str);
 extern char * strchr        (const char *s, int c);
 extern void   itoa          (unsigned long n, unsigned char *s, char base);
-extern int		atoi					(const char *str);
+extern int    atoi          (const char *str);
 extern void * memset        (void *s, int c, unsigned int n);
 extern void * memcpy        (void *dest, const void *src, size_t n);
 extern void   printk        (const char *fmt, ...);
@@ -160,7 +161,7 @@ extern void   printk        (const char *fmt, ...);
 //   Alexander Blessing - Flick OS:
 //   https://sourceforge.net/projects/flick/
 extern void   sprintk       (char *str, const char *format, ...);
-extern void		vsprintk			(char *str, const char *format, va_list ap);
+extern void   vsprintk      (char *str, const char *format, va_list ap);
 
 
 // keyboard.c
@@ -188,9 +189,9 @@ extern void   video_display_time  (int value);
 
 // kmalloc.c | MyOS_Blundell-master
 //
-extern void	*	kmalloc							(unsigned sz);
-extern void		kfree								(void *fr);
-extern void		kheap_SPEC					(void);
+extern void * kmalloc             (unsigned sz);
+extern void   kfree               (void *fr);
+extern void   kheap_SPEC          (void);
 //
 // SUMMER LANGUAGE | lang_core.c
 //

@@ -24,8 +24,8 @@
 //
 // The JIT | Summer Language:
 //
-static ASM *asm_main = NULL;
-LEXER lexer;
+static ASM    * asm_main = NULL;
+static LEXER    lexer;
 
 static char
     string_command [MAXLEN + 1]
@@ -108,8 +108,7 @@ int kernel_init (struct multiboot_info * mbi) {
 
     video_set_color (WHITE_TXT);
 
-    //video_puts ("\nTo display the commands list press: KEY TAB | SIZE_T: %d\n", sizeof(size_t));
-    printk ("\nTo display the commands list press: KEY TAB | SIZE_T: %d\n", sizeof(size_t));
+    video_puts ("\nTo display the commands list press: KEY TAB\n");
 
     return 1;
 }
@@ -321,7 +320,7 @@ void kernel_main_loop (void) {
 void kernel_main (struct multiboot_info * mbi) {
 
     if (!kernel_init(mbi))
-	return;
+  return;
 
     intr_Init       (); // interrupt init
     intr_SetMask    (IRQ_KEYBOARD, TRUE); // enable keyboard interrupt

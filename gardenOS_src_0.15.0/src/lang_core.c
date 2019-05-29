@@ -145,7 +145,7 @@ static void expr3 (LEXER *l, ASM *a) { // '('
 static void atom (LEXER *l, ASM *a) { // expres
     if (l->tok == TOK_ID) {
         int i;
-				if ((i = VarFind(l->token)) != -1) {
+        if ((i = VarFind(l->token)) != -1) {
             var_type = Gvar[i].type;
 
             if (main_variable_type==TYPE_FLOAT && var_type != TYPE_FLOAT) {
@@ -189,7 +189,6 @@ static void atom (LEXER *l, ASM *a) { // expres
 void expression (LEXER *l, ASM *a) {
     if (l->tok==TOK_ID || l->tok==TOK_NUMBER) {
         TFunc *fi;
-        int i, next;
 
         // call a function without return:
         //   function_name (...);
@@ -315,8 +314,7 @@ static int see (LEXER *l) {
 // function_name (a, b, c + d);
 //
 static void execute_call (LEXER *l, ASM *a, TFunc *func) {
-    int count = 0, is_float = 0;;
-    int pos = 0, size = 4, is_string = 0; // Used in: JIT 32 bits
+    int count = 0, pos = 0, size = 4;
 
     while (lex(l)) {
         if (l->tok==TOK_ID || l->tok==TOK_NUMBER || l->tok==TOK_STRING || l->tok=='(') {
