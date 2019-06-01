@@ -39,12 +39,9 @@
 //-----------------------------------------------
 //
 #include "multiboot.h"
-
-#ifdef USE_SUMMER_LANGUAGE
-    #include "lang_lex.h"
-    #include "lang_asm.h"
-    #include "lang_summer.h"
-#endif
+#include "lang_lex.h"
+#include "lang_asm.h"
+#include "lang_summer.h"
 
 //-----------------------------------------------
 //---------------  DEFINE / ENUM  ---------------
@@ -187,16 +184,12 @@ extern void   video_crestore      (void); // cursor restore position
 extern void   video_scroll        (void);
 extern void   video_display_time  (int value);
 
+
 // kmalloc.c | MyOS_Blundell-master
 //
 extern void * kmalloc             (unsigned sz);
 extern void   kfree               (void *fr);
 extern void   kheap_SPEC          (void);
-//
-// SUMMER LANGUAGE | lang_core.c
-//
-extern ASM  * core_Init           (unsigned int size);
-extern int    core_Parse          (LEXER *l, ASM *a, char *text, char *name);
 
 #endif // ! _GARDEN_H
 

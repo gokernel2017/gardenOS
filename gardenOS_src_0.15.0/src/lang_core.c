@@ -15,6 +15,8 @@
 //
 #include "garden.h"
 
+#ifdef USE_SUMMER_LANGUAGE
+
 //-----------------------------------------------
 //-----------------  PROTOTYPES  ----------------
 //-----------------------------------------------
@@ -486,4 +488,6 @@ void lib_info (int arg) {
 void lib_printi (int i) {
     printk ("Result: %d\n", i);
 }
+
+#endif // USE_SUMMER_LANGUAGE
 

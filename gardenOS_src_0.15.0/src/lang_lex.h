@@ -97,6 +97,11 @@ extern int  lex_set     (LEXER *l, char *text, char *name);
 extern void lex_save    (LEXER *l);
 extern void lex_restore (LEXER *l);
 
+// ERRO:
+extern void   Erro      (char *format, ...);
+extern char	*	ErroGet   (void);
+extern void   ErroReset (void);
+
 #ifdef __cplusplus
 }
 #endif

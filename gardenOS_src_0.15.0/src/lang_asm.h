@@ -25,6 +25,14 @@ extern "C" {
 #define UCHAR               unsigned char
 #define ASM_DEFAULT_SIZE    5000
 
+typedef struct ASM ASM;
+
+// lang_asm.c
+//
+extern int erro;
+
+#ifdef USE_SUMMER_LANGUAGE
+
 enum {
     // 32 bits
     EAX = 0,
@@ -43,34 +51,6 @@ enum {
     RSI,
     RDI
 };
-
-typedef struct ASM ASM;
-typedef struct ASM_label  ASM_label;
-typedef struct ASM_jump   ASM_jump;
-
-struct ASM { // opaque struct
-    UCHAR     *p;
-    UCHAR     *code;
-    ASM_label *label;
-    ASM_jump  *jump;
-    int       size;
-};
-struct ASM_label {
-    char      *name;
-    int       pos;
-    ASM_label *next;
-};
-struct ASM_jump {
-    char      *name;
-    int       pos;
-    int       type;
-    int       exist; // to check if this 'exist'
-    ASM_jump  *next;
-};
-
-// lang_asm.c
-//
-extern int erro;
 
 //
 // const EMIT opcode:
@@ -129,6 +109,7 @@ extern void emit_expression_sub_long (ASM *a);
 extern void emit_expression_mul_long (ASM *a);
 extern void emit_expression_div_long (ASM *a);
 
+#endif //USE_SUMMER_LANGUAGE
 
 #ifdef __cplusplus
 }

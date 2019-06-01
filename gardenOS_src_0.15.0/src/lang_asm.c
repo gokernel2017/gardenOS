@@ -13,12 +13,32 @@
 //
 #include "garden.h"
 
-#define STR_ERRO_SIZE   1024
-#define REG_MAX         6
+#ifdef USE_SUMMER_LANGUAGE
 
-// global:
-int erro;
-static char strErro [STR_ERRO_SIZE + 1];
+#define REG_MAX 6
+
+typedef struct ASM_label  ASM_label;
+typedef struct ASM_jump   ASM_jump;
+
+struct ASM { // opaque struct
+    UCHAR     *p;
+    UCHAR     *code;
+    ASM_label *label;
+    ASM_jump  *jump;
+    int       size;
+};
+struct ASM_label {
+    char      *name;
+    int       pos;
+    ASM_label *next;
+};
+struct ASM_jump {
+    char      *name;
+    int       pos;
+    int       type;
+    int       exist; // to check if this 'exist'
+    ASM_jump  *next;
+};
 
 //
 // const EMIT opcode:
@@ -86,9 +106,9 @@ void asm_Reset (ASM *a) {
 }
 
 void asm_get_addr (ASM *a, void *ptr) { ///: 32/64 BITS OK
-  *(void**)a->p = ptr;
-  //a->p += sizeof(void*);
-  a->p += 4; // ! OK
+    *(void**)a->p = ptr;
+    //a->p += sizeof(void*);
+    a->p += 4; // ! OK
 }
 
 void asm_Label (ASM *a, char *name) {
@@ -122,36 +142,36 @@ void asm_Label (ASM *a, char *name) {
 //-------------------------------------------------------------------
 //
 void g (ASM *a, UCHAR c) {
-  *a->p++ = c;
+    *a->p++ = c;
 }
 void gen (ASM *a, UCHAR c) {
-  *a->p++ = c;
+    *a->p++ = c;
 }
 void g2 (ASM *a, UCHAR c1, UCHAR c2) {
-  a->p[0] = c1;
-  a->p[1] = c2;
-  a->p += 2;
+    a->p[0] = c1;
+    a->p[1] = c2;
+    a->p += 2;
 }
 void g3 (ASM *a, UCHAR c1, UCHAR c2, UCHAR c3) {
-  a->p[0] = c1;
-  a->p[1] = c2;
-  a->p[2] = c3;
-  a->p += 3;
+    a->p[0] = c1;
+    a->p[1] = c2;
+    a->p[2] = c3;
+    a->p += 3;
 }
 void g4 (ASM *a, UCHAR c1, UCHAR c2, UCHAR c3, UCHAR c4) {
-  a->p[0] = c1;
-  a->p[1] = c2;
-  a->p[2] = c3;
-  a->p[3] = c4;
-  a->p += 4;
+    a->p[0] = c1;
+    a->p[1] = c2;
+    a->p[2] = c3;
+    a->p[3] = c4;
+    a->p += 4;
 }
 void g5 (ASM *a, UCHAR c1, UCHAR c2, UCHAR c3, UCHAR c4, UCHAR c5) {
-  a->p[0] = c1;
-  a->p[1] = c2;
-  a->p[2] = c3;
-  a->p[3] = c4;
-  a->p[4] = c5;
-  a->p += 5;
+    a->p[0] = c1;
+    a->p[1] = c2;
+    a->p[2] = c3;
+    a->p[3] = c4;
+    a->p[4] = c5;
+    a->p += 5;
 }
 
 void emit (ASM *a, const UCHAR opcode[], unsigned int len) {
@@ -161,26 +181,26 @@ void emit (ASM *a, const UCHAR opcode[], unsigned int len) {
 }
 
 void emit_begin (ASM *a) { //: 32/64 BITS OK
-  #if defined(__x86_64__)
-  // 55         : push  %rbp
-  // 48 89 e5   : mov   %rsp,%rbp
-  //-----------------------------
-  a->p[0] = 0x55;
-  a->p[1] = 0x48;
-  a->p[2] = 0x89;
-  a->p[3] = 0xe5;
-  a->p += 4;
-  emit_sub_esp(a,48); // 48 / 8 := 6
-  #else
-  // 55     : push  %ebp
-  // 89 e5  : mov   %esp,%ebp
-  //-----------------------------
-  a->p[0] = 0x55;
-  a->p[1] = 0x89;
-  a->p[2] = 0xe5;
-  a->p += 3;
-  emit_sub_esp(a,100);
-  #endif
+    #if defined(__x86_64__)
+    // 55         : push  %rbp
+    // 48 89 e5   : mov   %rsp,%rbp
+    //-----------------------------
+    a->p[0] = 0x55;
+    a->p[1] = 0x48;
+    a->p[2] = 0x89;
+    a->p[3] = 0xe5;
+    a->p += 4;
+    emit_sub_esp(a,48); // 48 / 8 := 6
+    #else
+    // 55     : push  %ebp
+    // 89 e5  : mov   %esp,%ebp
+    //-----------------------------
+    a->p[0] = 0x55;
+    a->p[1] = 0x89;
+    a->p[2] = 0xe5;
+    a->p += 3;
+    emit_sub_esp(a,100);
+    #endif
 }
 
 void emit_end (ASM *a) { ///: 32/64 BITS OK
@@ -322,23 +342,21 @@ void emit_mov_eax_ESP (ASM *a, UCHAR index) {
 }
 
 void emit_expression_add_long (ASM *a) {
-		pop_register();
-		if (reg == ECX && reg-1 == EAX) {
-				EMIT(a,OP_add_ecx_eax); // add %ecx, %eax
-		}
+    pop_register();
+    if (reg == ECX && reg-1 == EAX) {
+        EMIT(a,OP_add_ecx_eax); // add %ecx, %eax
+    }
 }
 
 void emit_expression_sub_long (ASM *a) { 
-		pop_register();
-		// DEBUG !
-//    printf ("  sub %s, %s\n", REGISTER[reg], REGISTER[reg-1]);
-		if (reg == ECX && reg-1 == EAX) {
-				EMIT(a,OP_sub_ecx_eax); // sub %ecx, %eax
-		}
-		else
-		if (reg == EDX && reg-1 == ECX) {
-				EMIT(a,OP_sub_edx_ecx); // sub %edx, %ecx
-		}
+    pop_register();
+    if (reg == ECX && reg-1 == EAX) {
+        EMIT(a,OP_sub_ecx_eax); // sub %ecx, %eax
+    }
+    else
+    if (reg == EDX && reg-1 == ECX) {
+        EMIT(a,OP_sub_edx_ecx); // sub %edx, %ecx
+    }
 }
 
 void emit_expression_mul_long (ASM *a) {
@@ -367,43 +385,18 @@ void emit_expression_div_long (ASM *a) {
 }
 
 void asm_expression_reset (void) {
-		reg = 0;
+    reg = 0;
 }
 
 void emit_expression_push_long (ASM *a, long value) {
-		emit_mov_long_reg (a, value, reg); // mov $1000, %eax
-		push_register();
+    emit_mov_long_reg (a, value, reg); // mov $1000, %eax
+    push_register();
 }
 
 void emit_expression_push_var (ASM *a, void *var) {
-		emit_mov_var_reg (a, var, reg);
-		push_register();
+    emit_mov_var_reg (a, var, reg);
+    push_register();
 }
 
-//-------------------------------------------------------------------
-//------------------------------  ERRO  -----------------------------
-//-------------------------------------------------------------------
-//
-void Erro (char *format, ...) {
-  char msg[1024] = { 0 };
-  va_list ap;
-
-  va_start (ap,format);
-  vsprintk (msg, format, ap);
-  va_end (ap);
-  if ((strlen(strErro) + strlen(msg)) < STR_ERRO_SIZE)
-    strcat (strErro, msg);
-  erro++;
-}
-char *ErroGet (void) {
-  if (strErro[0])
-    return strErro;
-  else
-    return NULL;
-}
-void ErroReset (void) {
-  erro = 0;
-  strErro[0] = 0;
-}
-// lines: 1039
+#endif // USE_SUMMER_LANGUAGE
 

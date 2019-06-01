@@ -32,8 +32,32 @@
  */
 
 #include "intr.h"
-//#include "boot.h"
-//#include "io.h"
+
+extern unsigned char inb  (unsigned short port);
+extern void          outb (unsigned short port, unsigned char value);
+
+/*
+ * To save space, we don't include assembly-language trampolines for
+ * each interrupt vector. Instead, we allocate a table in the BSS
+ * segment which we can fill in at runtime with simple trampoline
+ * functions. This structure actually describes executable 32-bit
+ * code.
+ */
+
+typedef struct {
+   unsigned short code1;
+   unsigned int   arg;
+   unsigned char  code2;
+   IntrHandler    handler;
+   unsigned int   code3;
+   unsigned int   code4;
+   unsigned int   code5;
+   unsigned int   code6;
+   unsigned int   code7;
+   unsigned int   code8;
+} PACKED IntrTrampolineType;
+//} IntrTrampolineType;
+
 
 
 /*
@@ -43,33 +67,86 @@
 
 typedef union {
    struct {
-      uint16 offsetLow;
-      uint16 segment;
-      uint16 flags;
-      uint16 offsetHigh;
+      unsigned short offsetLow;
+      unsigned short segment;
+      unsigned short flags;
+      unsigned short offsetHigh;
    };
    struct {
-      uint32 offsetLowSeg;
-      uint32 flagsOffsetHigh;
+      unsigned int offsetLowSeg;
+      unsigned int flagsOffsetHigh;
    };
-} PACKED IDTType;
+} __attribute__ ((__packed__)) IDTType;
 
 /*
  * Note the IDT is page-aligned. Only 8-byte alignment is actually
  * necessary, though page alignment may help performance in some
  * environments.
  */
-static IDTType ALIGNED(4096) IDT[NUM_INTR_VECTORS];
+//static IDTType ALIGNED(4096) IDT[NUM_INTR_VECTORS];
+static IDTType IDT[NUM_INTR_VECTORS];
 
 const struct {
-   uint16 limit;
+   unsigned short limit;
    void *address;
-} PACKED IDTDesc = {
+} __attribute__ ((__packed__)) IDTDesc = {
    .limit = NUM_INTR_VECTORS * 8 - 1,
    .address = IDT,
 };
 
 IntrTrampolineType ALIGNED(4) IntrTrampoline[NUM_INTR_VECTORS];
+
+
+/*
+ * Intr_SetHandler --
+ *
+ *    Set a C-language interrupt handler for a particular vector.
+ *    Note that the argument is a vector number, not an IRQ.
+ */
+
+void intr_SetHandler (int vector, IntrHandler handler) {
+    IntrTrampoline[vector].handler = handler;
+}
+
+/*
+ * Intr_SetMask --
+ *
+ *    (Un)mask a particular IRQ.
+ */
+
+void intr_SetMask (int irq, char enable) {
+    unsigned char port, bit, mask;
+
+   if (irq >= 8) {
+      bit = 1 << (irq - 8);
+      port = PIC2_DATA_PORT;
+   } else {
+      bit = 1 << irq;
+      port = PIC1_DATA_PORT;
+   }
+
+   mask = inb(port);
+
+   /* A '1' bit in the mask inhibits the interrupt. */
+   if (enable) {
+      mask &= ~bit;
+   } else {
+      mask |= bit;
+   }
+
+   outb (port, mask);
+}
+
+
+
+void intr_Halt(void) {
+   asm volatile ("hlt");
+}
+
+void function_null (int i) {
+
+}
+
 
 /*
  * IntrDefaultHandler --
@@ -77,10 +154,22 @@ IntrTrampolineType ALIGNED(4) IntrTrampoline[NUM_INTR_VECTORS];
  *    Default no-op interrupt handler.
  */
 
-static void
-IntrDefaultHandler(int vector)
+void IntrDefaultHandler (int vector)
 {
    /* Do nothing. */
+}
+
+void intr_Enable(void) {
+   asm volatile ("sti");
+}
+
+void intr_Disable (void) {
+   asm volatile ("cli");
+}
+
+
+void Intr_Break (void) {
+   asm volatile ("int3");
 }
 
 
@@ -92,18 +181,16 @@ IntrDefaultHandler(int vector)
  *    but all handlers are no-ops.
  */
 
-fastcall void
-Intr_Init(void)
-{
+fastcall void intr_Init (void) {
    int i;
 
-   Intr_Disable();
+   intr_Disable();
 
    IDTType *idt = IDT;
    IntrTrampolineType *tramp = IntrTrampoline;
 
    for (i = 0; i < NUM_INTR_VECTORS; i++) {
-      uint32 trampolineAddr = (uint32) tramp;
+      unsigned int trampolineAddr = (unsigned int) tramp;
 
       /*
        * Set up the IDT entry as a 32-bit interrupt gate, pointing at
@@ -191,10 +278,8 @@ Intr_Init(void)
    asm volatile ("lidt IDTDesc");
 #endif
 
-//   asm volatile ("lidt IDTDesc");
-
    typedef struct {
-      uint8 port, data;
+      unsigned char port, data;
    } PortData8;
 
    static const PortData8 pitInit[] = {
@@ -219,153 +304,22 @@ Intr_Init(void)
       { PIC2_DATA_PORT, 0xFF },
    };
 
-   const PortData8 *p = pitInit;
+    const PortData8 *p = pitInit;
 
-   for (i = arraysize(pitInit); i; i--, p++) {
-      outb(p->port, p->data);
-   }
+    for (i = arraysize(pitInit); i; i--, p++) {
+        outb (p->port, p->data);
+    }
 
-   Intr_Enable();
+    intr_Enable();
+
+    for (i = 0; i < NUM_FAULT_VECTORS; i++) {
+        IntrTrampoline [ i ].handler = function_null;
+    }
 }
 
-
-/*
- * Intr_SetFaultHandlers --
- *
- *    Set all processor fault handlers to the provided function.
- */
-
-fastcall void
-Intr_SetFaultHandlers(IntrHandler handler)
-{
-   int vector;
-
-   for (vector = 0; vector < NUM_FAULT_VECTORS; vector++) {
-      Intr_SetHandler(vector, handler);
-   }
+//fastcall void Timer_InitPIT (uint16 divisor) {
+void intr_timer_InitPIT (unsigned short divisor) {
+    outb (0x43, 0x34);
+    outb (0x40, divisor & 0xFF);
+    outb (0x40, divisor >> 8);
 }
-
-
-/*
- * Intr_InitContext --
- *
- *    Create an IntrContext representing a brand new thread of
- *    execution. This can be used as a primitive to implement
- *    light-weight cooperative or pre-emptive multithreading.
- *
- *    'Stack' points to the initial value of the stack pointer.
- *    Stacks grow downward, so this should point to the top word of
- *    the allocated stack memory.
- */
-
-fastcall void
-Intr_InitContext(IntrContext *ctx, uint32 *stack, IntrContextFn main)
-{
-   Intr_SaveContext(ctx);
-   ctx->esp = (uint32) stack;
-   ctx->eip = (uint32) main;
-}
-
-
-/*
- * Timer_InitPIT --
- *
- *    Set up PIT channel 0 in rate timer mode, with the provided
- *    divisor. It will trigger IRQ 0 at (PIT_HZ / divisor) Hz.
- */
-
-fastcall void Intr_Timer_InitPIT (uint16 divisor) {
-   outb(0x43, 0x34);
-   outb(0x40, divisor & 0xFF);
-   outb(0x40, divisor >> 8);
-}
-
-/*
- * Intr_SaveContext --
- *
- *    This is a C-callable function which constructs an
- *    IntrContext representing the current execution
- *    context. This is nearly equivalent to invoking
- *    software interrupt and saving the interrupt's
- *    IntrContext, but this implementation doesn't have the
- *    overhead of an actual interrupt invocation.
- */
-#ifdef WIN32
-asm (".global _Intr_SaveContext \n _Intr_SaveContext:"
-#endif
-#ifdef __linux__
-asm (".global Intr_SaveContext \n Intr_SaveContext:"
-#endif
-
-     "pusha \n"
-
-     /*
-      * Adjust the saved stack pointer. IntrContexts always
-      * store an %esp which has three words on the stack
-      * prior to the general-purpose regs, but since we don't
-      * use cs or eflags we only have 1.
-      */
-
-     "sub     $8, 12(%esp) \n"
-
-     /*
-      * The stack now matches the layout of the first 9 words
-      * of IntrContext. Copy these, then manually save CS and
-      * eflags.
-      */
-
-     "mov     %esp, %esi \n"
-     "mov     36(%esp), %edi \n"
-     "mov     $9, %ecx \n"
-     "rep movsl \n"
-     "xor     %eax, %eax \n"
-     "mov     %cs, %ax \n"
-     "stosl \n"
-     "pushf \n"
-     "pop     %eax \n"
-     "stosl \n"
-
-     /* Return 0 when this function is called directly. */
-
-     "popa \n"
-     "xor     %eax, %eax \n"
-     "ret" );
-
-
-/*
- * Intr_RestoreContext --
- *
- *    This is the inverse of Intr_SaveContext: copy the
- *    IntrContext onto the target context's stack frame,
- *    switch stacks, then restore the rest of the context's
- *    saved state.
- */
-
-#ifdef WIN32
-asm(".global _Intr_RestoreContext \n _Intr_RestoreContext:"
-#endif
-#ifdef __linux__
-asm(".global Intr_RestoreContext \n Intr_RestoreContext:"
-#endif
-
-    "mov     4(%esp), %esi \n"   // Load pointer to IntrContext
-    "mov     12(%esi), %esp \n"  // Switch stacks
-
-    /*
-     * esp was saved with 3 words on the stack (eip, cs, cflags).
-     * Position esp so we have 9 words instead. (General purpose
-     * regs plus eip, but no cs/eflags.)
-     */
-
-    "sub     $24, %esp \n"
-
-    // Copy the first 9 words of Intrcontext back onto the stack.
-
-    "mov     %esp, %edi \n"
-    "mov     $9, %ecx \n"
-    "rep movsl \n"
-
-    // Restore the general purpose regs and eip
-
-    "popa \n"
-    "ret" );

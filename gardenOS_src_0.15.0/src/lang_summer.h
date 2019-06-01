@@ -53,6 +53,11 @@ struct TFunc {
 
 extern TVar Gvar [GVAR_SIZE + 1];
 
+//
+// SUMMER LANGUAGE | lang_core.c
+//
+extern ASM    * core_Init       (unsigned int size);
+extern int      core_Parse      (LEXER *l, ASM *a, char *text, char *name);
 
 extern void     CreateVarLong   (char *name, long l);
 extern TFunc  * FuncFind        (char *name);

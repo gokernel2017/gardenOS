@@ -17,8 +17,12 @@
 //
 #include "garden.h"
 
-extern void Erro (char *format, ...); // in file: "lang_asm.c"
+#define STR_ERRO_SIZE   1024
 
+// global:
+int erro;
+
+static char strErro [STR_ERRO_SIZE + 1];
 
 static char save_token [LEXER_TOKEN_SIZE + 1];
 static int  save_pos;
@@ -229,4 +233,30 @@ void lex_restore (LEXER *l) {
     l->line = save_line;
 }
 
+//-------------------------------------------------------------------
+//------------------------------  ERRO  -----------------------------
+//-------------------------------------------------------------------
+//
+void Erro (char *format, ...) {
+  char msg[1024] = { 0 };
+  va_list ap;
+
+  va_start (ap,format);
+  vsprintk (msg, format, ap);
+  va_end (ap);
+  if ((strlen(strErro) + strlen(msg)) < STR_ERRO_SIZE)
+    strcat (strErro, msg);
+  erro++;
+}
+char *ErroGet (void) {
+  if (strErro[0])
+    return strErro;
+  else
+    return NULL;
+}
+void ErroReset (void) {
+  erro = 0;
+  strErro[0] = 0;
+}
+// lines: 1039
 

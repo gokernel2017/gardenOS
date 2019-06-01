@@ -22,10 +22,17 @@
 #define FPS_50_PER_SEC  20
 
 //
-// The JIT | Summer Language:
+// Enable/Disable in file: garden.h
 //
-static ASM    * asm_main = NULL;
-static LEXER    lexer;
+#ifdef USE_SUMMER_LANGUAGE
+    //
+    // The JIT | Summer Language:
+    //
+    static ASM * asm_main = NULL;
+
+#endif // USE_SUMMER_LANGUAGE
+
+static LEXER lexer;
 
 static char
     string_command [MAXLEN + 1]
@@ -37,11 +44,11 @@ static unsigned long
 
 static int
     quit, // to main loop quit
-    key,  // key from KeyBoard
     is_reboot = 0
     ;
 
 // prototypes:
+int GetLineCommand (char *string);
 void cmd_echo (void);
 int store_arg (CMD_ARG *arg);
 
@@ -56,6 +63,7 @@ struct CMD {
     { "echo",     cmd_echo,     "Dysplay a text message" },
     { NULL, NULL, NULL }
 };
+
 
 void funcao (int a, int b, int c) { //
     printk("a: %d\n", a);
@@ -91,11 +99,13 @@ int kernel_init (struct multiboot_info * mbi) {
 
     kheap_SPEC();
 
+    #ifdef USE_SUMMER_LANGUAGE
     //
     // Summer Language Init:
     //
     if ((asm_main = core_Init (5000)) == NULL)
   return 0;
+    #endif
 
     printk ("\nGarden OS: %d.%d.%d\n",
             GARDEN_VERSION, GARDEN_VERSION_SUB, GARDEN_VERSION_PATCH);
@@ -134,7 +144,7 @@ void reboot (void) {
 }// reboot ()
 
 
-int ExecuteCommand (char *string) {
+int GetLineCommand (char *string) {
     static int pos = 0;
     int k;
 
@@ -171,11 +181,8 @@ int ExecuteCommand (char *string) {
 
 void keyboard_handle (int i) {
 
-    key = ExecuteCommand (string_command);
-
-    // display the function[] list
-    //
-    if (key == KEY_TAB) {
+    switch (GetLineCommand(string_command)) {
+    case KEY_TAB: { // display the function[] list
         struct CMD *cmd = command;
         video_puts ("\nCommands: ");
         video_set_color(VGA_COLOR_LIGHT_MAGENTA);
@@ -186,14 +193,15 @@ void keyboard_handle (int i) {
         video_set_color(WHITE_TXT);
         video_puts (SHELL_PROMPT);
         video_puts (string_command);
-  return;
-    }
+        return;
+        } 
 
-    if (key == KEY_ENTER) {
+    case KEY_ENTER: {
         struct CMD *cmd = command;
         char buf [MAXLEN + 1];
         int i = 0, exist;
 
+        #ifdef USE_SUMMER_LANGUAGE
         //---------------------------------------
         //
         // Summer Language ... Execute JIT:
@@ -210,6 +218,7 @@ void keyboard_handle (int i) {
             video_puts (SHELL_PROMPT);
       return;
         }
+        #endif // USE_SUMMER_LANGUAGE
 
         // set ( buf ) with the first "string"
         //
@@ -268,8 +277,8 @@ void keyboard_handle (int i) {
         memset (string_command, 0, MAXLEN);
         video_puts (SHELL_PROMPT);
 
-    }//: if (key == KEY_ENTER)
-
+        }// case KEY_ENTER:
+    }// switch (GetLineCommand(string_command))
 }// keyboard_handle()
 
 
@@ -316,19 +325,18 @@ void kernel_main_loop (void) {
 
 }// kernel_main_loop ()
 
-
 void kernel_main (struct multiboot_info * mbi) {
 
     if (!kernel_init(mbi))
   return;
 
-    intr_Init       (); // interrupt init
-    intr_SetMask    (IRQ_KEYBOARD, TRUE); // enable keyboard interrupt
-    intr_SetHandler (IRQ_VECTOR(IRQ_KEYBOARD), keyboard_handle); // set keyboard function handler
+    Intr_Init       (); // interrupt init
+    Intr_SetMask    (IRQ_KEYBOARD, TRUE); // enable keyboard interrupt
+    Intr_SetHandler (IRQ_VECTOR(IRQ_KEYBOARD), keyboard_handle); // set keyboard function handler
 
-    intr_timer_InitPIT  (PIT_HZ / CLOCKS_PER_SEC); // 1000
-    intr_SetMask        (IRQ_TIMER, TRUE);  // enable timer interrupt
-    intr_SetHandler     (IRQ_VECTOR(IRQ_TIMER), PIT_timer_handler); // set timer function handler
+    Intr_Timer_InitPIT  (PIT_HZ / CLOCKS_PER_SEC); // 1000
+    Intr_SetMask        (IRQ_TIMER, TRUE);  // enable timer interrupt
+    Intr_SetHandler     (IRQ_VECTOR(IRQ_TIMER), PIT_timer_handler); // set timer function handler
 
     //-------------------------------------------
     // HERE EXECUTE:
@@ -343,7 +351,7 @@ void kernel_main (struct multiboot_info * mbi) {
     //
     kernel_main_loop ();
 
-    intr_Disable ();
+    Intr_Disable ();
 
     kernel_finalize ();
 
