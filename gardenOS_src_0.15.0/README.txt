@@ -23,7 +23,7 @@
  ----------------------------
  title GARDEN OS
    kernel /gardenOS_kernel
-   module initrd
+   module /initrd_file
  ----------------------------
 
 
