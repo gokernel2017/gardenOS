@@ -16,6 +16,10 @@ THANKS TO:
   03: Micah Dowty - Creator of MetalKit:
       https://github.com/scanlime/metalkit/
       http://svn.navi.cx/misc/trunk/metalkit/
+      
+  04: JamesM's kernel development tutorials:
+  http://www.jamesmolloy.co.uk/tutorial_html/8.-The%20VFS%20and%20the%20initrd.html
+  
 ----------------------------------------------
 
 BETA.
