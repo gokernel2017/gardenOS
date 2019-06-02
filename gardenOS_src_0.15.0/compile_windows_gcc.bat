@@ -10,6 +10,8 @@ gcc src/keyboard.c  -m32 -o obj/keyboard.o  -s -c -O2 -U_WIN32 -Wall -nostdinc -
 gcc src/kernel.c    -m32 -o obj/kernel.o    -s -c -O2 -U_WIN32 -Wall -nostdinc -fno-exceptions -nostartfiles -ffreestanding -fno-builtin
 gcc src/kmalloc.c   -m32 -o obj/kmalloc.o   -s -c -O2 -U_WIN32 -Wall -nostdinc -fno-exceptions -nostartfiles -ffreestanding -fno-builtin
 
+gcc src/initrd.c    -m32 -o obj/initrd.o    -s -c -O2 -U_WIN32 -Wall -nostdinc -fno-exceptions -nostartfiles -ffreestanding -fno-builtin
+
 gcc src/lang_lex.c  -m32 -o obj/lang_lex.o  -s -c -O2 -U_WIN32 -Wall -nostdinc -fno-exceptions -nostartfiles -ffreestanding -fno-builtin
 gcc src/lang_asm.c  -m32 -o obj/lang_asm.o  -s -c -O2 -U_WIN32 -Wall -nostdinc -fno-exceptions -nostartfiles -ffreestanding -fno-builtin
 gcc src/lang_core.c -m32 -o obj/lang_core.o -s -c -O2 -U_WIN32 -Wall -nostdinc -fno-exceptions -nostartfiles -ffreestanding -fno-builtin

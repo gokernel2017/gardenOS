@@ -14,15 +14,16 @@
 
 
  TO TEST WITH QEMU:
-   qemu -kernel gardenOS_kernel
+   qemu -initrd initrd -kernel gardenOS_kernel
  OR
-   qemu-system-i386 -kernel gardenOS_kernel
+   qemu-system-i386 -initrd initrd -kernel gardenOS_kernel
 
 
  TO TEST WITH GRUB( 1.x ):
  ----------------------------
  title GARDEN OS
    kernel /gardenOS_kernel
+   module initrd
  ----------------------------
 
 

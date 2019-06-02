@@ -31,14 +31,21 @@ int   video_count = 0;
 // Read a byte from the specified port
 unsigned char inb (unsigned short port) {
     unsigned char result;
-    asm volatile ("inb %1, %0" :"=a" (result) :"d" (port));
+    asm volatile ("inb %1, %0" : "=a" (result) : "d" (port));
     return result;
+}
+
+Ushort inw (unsigned short port) {
+    unsigned short ret;
+    asm volatile ("inw %1, %0" : "=a" (ret) : "d" (port));
+    return ret;
 }
 
 // Write a byte into the specified port
 void outb (unsigned short port, unsigned char value) {
     asm volatile ("outb %0, %1" : :"a" (value), "d" (port)); //: metalkit
 }
+
 
 // Set cursor position
 // The same implementation as in get_cursor_offset()

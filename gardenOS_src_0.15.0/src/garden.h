@@ -39,6 +39,7 @@
 //-----------------------------------------------
 //
 #include "multiboot.h"
+#include "initrd.h"
 #include "lang_lex.h"
 #include "lang_asm.h"
 #include "lang_summer.h"
@@ -84,6 +85,7 @@
 typedef char                  * va_list;
 typedef __SIZE_TYPE__         size_t;
 typedef unsigned char         Uchar;
+typedef unsigned short        Ushort;
 
 
 /* Amount of space required in an argument list for an arg of type TYPE.
@@ -170,6 +172,7 @@ extern int  keyboard_getkey (void);
 // video.c
 //
 extern Uchar  inb                 (unsigned short port);
+extern Ushort inw                 (unsigned short port);
 extern void   outb                (unsigned short port, unsigned char value);
 //
 extern void   video_clear         (void);
@@ -190,6 +193,12 @@ extern void   video_display_time  (int value);
 extern void * kmalloc             (unsigned sz);
 extern void   kfree               (void *fr);
 extern void   kheap_SPEC          (void);
+
+
+// initrd.c
+//
+//extern void   initrd              (struct multiboot_info * mbi);
+extern fs_node_t * initrd (struct multiboot_info * mbi);
 
 #endif // ! _GARDEN_H
 

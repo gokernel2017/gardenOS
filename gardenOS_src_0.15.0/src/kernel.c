@@ -107,7 +107,7 @@ int kernel_init (struct multiboot_info * mbi) {
   return 0;
     #endif
 
-    printk ("\nGarden OS: %d.%d.%d\n",
+    printk ("\nWITH ROOTFS | Garden OS: %d.%d.%d\n",
             GARDEN_VERSION, GARDEN_VERSION_SUB, GARDEN_VERSION_PATCH);
 
     video_set_color (VGA_COLOR_LIGHT_BROWN);
@@ -337,6 +337,36 @@ void kernel_main (struct multiboot_info * mbi) {
     Intr_Timer_InitPIT  (PIT_HZ / CLOCKS_PER_SEC); // 1000
     Intr_SetMask        (IRQ_TIMER, TRUE);  // enable timer interrupt
     Intr_SetHandler     (IRQ_VECTOR(IRQ_TIMER), PIT_timer_handler); // set timer function handler
+
+    // ... testing ...
+    //
+    if ((fs_root = initrd (mbi)) != NULL) {
+        printk ("-------- INIT FS INITIALIZED -----------\n");
+        // list the contents of /
+        int i = 0;
+        struct dirent *node = 0;
+
+        while ((node = readdir_fs(fs_root, i)) != 0) {
+
+            printk ("Found file: '%s'", node->name);
+            fs_node_t *fsnode = finddir_fs(fs_root, node->name);
+
+            if ((fsnode->flags&0x7) == FS_DIRECTORY) {
+                video_puts ("\n\t(directory)\n");
+            } else {
+                printk ("\n\t contents: \"");
+                char buf[256];
+                unsigned int sz = read_fs(fsnode, 0, 256, buf);
+                int j;
+                for (j = 0; j < sz; j++)
+                    video_putc (buf[j]);
+            
+                video_puts("\"\n");
+            }
+
+            i++;
+        }
+    }
 
     //-------------------------------------------
     // HERE EXECUTE:

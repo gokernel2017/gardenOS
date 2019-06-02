@@ -59,13 +59,24 @@ char *strcat (char *dest, const char *src) {
     return dest;
 }
 
-/* strcpy() 
- * copies src to dest
- */
+/*
+// strcpy() 
+// copies src to dest
+//
 char *strcpy (char *dest, const char *src) {
 		while (*src != '\0')
 				*(dest++) = *(src++);
 		return dest;
+}
+*/
+
+// Copy the NULL-terminated string src into dest, and
+// return dest.
+char *strcpy(char *dest, const char *src) {
+    do {
+        *dest++ = *src++;
+    }
+    while (*src != 0);
 }
 
 /* strcmp() 
