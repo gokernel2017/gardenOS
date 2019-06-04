@@ -98,6 +98,9 @@ fs_node_t *initialise_initrd (unsigned int location) {
     initrd_header = (initrd_header_t *)location;
     file_headers = (initrd_file_header_t *) (location+sizeof(initrd_header_t));
 
+		printk ("InitRD total files: %d -- location_size: %d %d\n", initrd_header->nfiles, location, file_headers->offset);
+		printk ("Magin number: %d\n", file_headers->magic);
+
     // Initialise the root directory.
     initrd_root = (fs_node_t*)kmalloc(sizeof(fs_node_t));
     strcpy(initrd_root->name, "initrd");
@@ -138,6 +141,7 @@ fs_node_t *initialise_initrd (unsigned int location) {
         file_headers[i].offset += location;
         // Create a new file node.
         //strcpy(root_nodes[i].name, &file_headers[i].name);
+        //sprintk (root_nodes[i].name, "%s", &file_headers[i].name);
         sprintk (root_nodes[i].name, "%s", file_headers[i].name);
         root_nodes[i].mask = root_nodes[i].uid = root_nodes[i].gid = 0;
         root_nodes[i].length = file_headers[i].length;

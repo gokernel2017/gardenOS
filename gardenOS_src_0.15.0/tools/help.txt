@@ -1,0 +1,10 @@
+
+  Garden OS Version 0.15.2
+
+  This is a simple operating system x86 ( 32 bits ), make from hobby ...
+
+  This version is BETA ...
+
+  BY: gokernel@hotmail.com
+
+  

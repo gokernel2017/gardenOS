@@ -82,6 +82,8 @@
 
 #define ARG_MAX               10
 
+#define MY_INITRD_MAGIC_ID    7654321
+
 typedef char                  * va_list;
 typedef __SIZE_TYPE__         size_t;
 typedef unsigned char         Uchar;
@@ -134,6 +136,27 @@ typedef struct {
     VALUE   argv [ARG_MAX + 1];
 }CMD_ARG;
 
+//
+// unfigned int nfiles;
+// unsigned int magic;
+//
+typedef struct {
+    unsigned int  name;
+    unsigned int  data; // data start
+    unsigned int  size; // data size
+}INITRD_FILE;
+
+
+typedef struct {
+    char  *name;
+    unsigned int  data;
+    unsigned int  size;
+}TFile;
+
+typedef struct {
+    TFile   *files;
+    int     size;
+}TRoot_File;
 
 // kernel.c
 //

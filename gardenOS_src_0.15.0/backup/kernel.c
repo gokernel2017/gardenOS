@@ -1,3 +1,5 @@
+//00000000000000000000000000000000000000000000000000000
+
 //-------------------------------------------------------------------
 //
 // GARDEN OS:
@@ -34,8 +36,6 @@
 
 static LEXER lexer;
 
-static TRoot_File root_file;
-
 static char
     string_command [MAXLEN + 1]
     ;
@@ -45,7 +45,6 @@ static unsigned long
     ;
 
 static int
-    initrd_location,
     quit, // to main loop quit
     is_reboot = 0
     ;
@@ -53,8 +52,6 @@ static int
 // prototypes:
 int GetLineCommand (char *string);
 void cmd_echo (void);
-void cmd_ls (void);
-void cmd_cat (void);
 int store_arg (CMD_ARG *arg);
 
 struct CMD {
@@ -66,8 +63,6 @@ struct CMD {
     { "reboot",   NULL,         "Reboot the OS." },
     { "clear",    video_clear,  "Clear the screen." },
     { "echo",     cmd_echo,     "Dysplay a text message" },
-    { "ls",       cmd_ls,       "Dysplay the file list" },
-    { "cat",      cmd_cat,      "Dysplay the file list" },
     { NULL, NULL, NULL }
 };
 
@@ -86,40 +81,6 @@ void cmd_echo (void) {
     funcao (arg.argv[0].l, arg.argv[1].l, arg.argv[2].l);
 }
 
-void cmd_ls (void) {
-    int i;
-    //video_set_color (VGA_COLOR_LIGHT_GREEN);
-    video_set_color (VGA_COLOR_LIGHT_BROWN);
-    for (i = 0; i < root_file.size; i++) {
-        printk ("\n%d | %s", root_file.files[i].size, root_file.files[i].name);
-    }
-    video_set_color (WHITE_TXT);
-}
-
-void cmd_cat (void) {
-    char *s = string_command;
-    if (strlen(string_command) >= 5) {
-        int i;
-        s += 4;
-        for (i = 0; i < root_file.size; i++) {
-            if (!strcmp(root_file.files[i].name, s)) {
-                char c, old = 0;
-                int size = root_file.files[i].size;
-                int data = root_file.files[i].data;
-                printk("\n");
-                while (size--) {
-                    c = *(unsigned int *)(initrd_location + data++);
-										if (c == 13) { printk("\n"); continue; }
-										if (c >= 32) printk ("%c", c);
-                }
-                printk("\n");
-                return;
-            }
-        }
-    }
-}
-
-
 int store_arg (CMD_ARG *arg) {
     int i = 0;
     lex_set (&lexer, string_command, "string");
@@ -128,11 +89,6 @@ int store_arg (CMD_ARG *arg) {
         if (lexer.tok==TOK_NUMBER) {
             arg->argv[i].l = atoi (lexer.token);
             arg->type[i] = TOK_NUMBER;
-            i++;
-        }
-        if (lexer.tok==TOK_STRING) {
-            arg->argv[i].s = lexer.token;
-            arg->type[i] = TOK_STRING;
             i++;
         }
     }
@@ -374,53 +330,47 @@ void kernel_main_loop (void) {
 
 int name, data, size, xx;
 char buf [10] = { 0, 0, 0, 0, 0 };
-char string[100];
 
 void my_initrd (struct multiboot_info * mbi) {
     if (mbi->mods_count > 0) {
-        initrd_location = *((unsigned int*)mbi->mods_addr);
-        char id    = *(unsigned int *)initrd_location;
-        int nfiles = *(unsigned int *)(initrd_location + 1);
+        int location = *((unsigned int*)mbi->mods_addr);
+        char id    = *(unsigned int *)location;
+        int nfiles = *(unsigned int *)(location + 1);
         int pos = 5, i;
-
-        root_file.files = (TFile*) kmalloc (sizeof(TFile) * nfiles);
-        root_file.size = nfiles;
 
         printk ("InitRD Started ...\nID: %d\nNFILES: %d\n", id, nfiles);
         for (i = 0; i < nfiles; i++) {
-	/*
                 if (i == 0) {
-                    name = *(unsigned int *)(initrd_location + pos);
-                    data = *(unsigned int *)(initrd_location + pos+5);
-                    size = *(unsigned int *)(initrd_location + pos+9);
+                    name = *(unsigned int *)(location + pos);
+                    data = *(unsigned int *)(location + pos+5);
+                    size = *(unsigned int *)(location + pos+9);
                     pos += 13;
                 } else {
-*/
-                    name = *(unsigned int *)(initrd_location + pos);
-                    data = *(unsigned int *)(initrd_location + pos+4);
-                    size = *(unsigned int *)(initrd_location + pos+8);
+                    name = *(unsigned int *)(location + pos);
+                    data = *(unsigned int *)(location + pos+4);
+                    size = *(unsigned int *)(location + pos+8);
                     pos += 12;
-//                }
+                }
 //            printk ("\nname: %d | data: %d | size: %d\n", name, data, size);
-
             // data:
-            //xx = 6 + (nfiles * 12) + name;
-            xx = 5 + (nfiles * 12) + name;
-            int count = data-name, c = 0;
-
-            root_file.files[i].name = kmalloc (count+2);
-            root_file.files[i].size = size;
-
+            xx = 6 + (nfiles * 12) + name;
+            int count = data-name;
+            printk ("File(");
             while (count--) {
-                buf[0] = *(unsigned int *)(initrd_location + xx);
-                root_file.files[i].name[c++] = buf[0];
+                buf[0] = *(unsigned int *)(location + xx);
+                printk ("%c", buf[0]);
                 xx++;
             }
-            root_file.files[i].name[c] = 0;
-
-            //xx = 6 + (nfiles * 12) + data;
-            xx = 5 + (nfiles * 12) + data;
-            root_file.files[i].data = xx;
+            size--;
+            printk(") size: %d\n", size);
+            // data:
+            xx = 6 + (nfiles * 12) + data;
+            while (size--) {
+                buf[0] = *(unsigned int *)(location + xx);
+                printk ("%c", buf[0]);
+                xx++;
+            }
+            printk("\n");
         }
     } else {
         printk ("INITRD NOT FOUND\n");
