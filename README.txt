@@ -22,6 +22,9 @@ THANKS TO:
   
 ----------------------------------------------
 
+Screen:
+https://github.com/gokernel2017/gokernel2017.github.io/blob/master/gardenOS_bmp.png
+
 BETA.
 
 BY: Francisco - gokernel@hotmail.com
